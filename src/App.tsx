@@ -97,6 +97,10 @@ const App: React.FC = () => {
         throw new Error("Image could not be read");
       }
 
+      const isJpeg =
+        imagePath.toLowerCase().endsWith(".jpg") ||
+        imagePath.toLowerCase().endsWith(".jpeg");
+
       // Ensure that the base64 data is correctly handled
       const binaryString = atob(imageBase64); // Convert base64 to binary string
       const length = binaryString.length;
@@ -107,8 +111,14 @@ const App: React.FC = () => {
         bytes[i] = binaryString.charCodeAt(i);
       }
 
-      const blob = new Blob([bytes], { type: "image/jpeg" });
-      const file = new File([blob], "image.jpg", { type: "image/jpeg" });
+      const blob = new Blob([bytes], {
+        type: isJpeg ? "image/jpeg" : "image/png",
+      });
+      const file = new File([blob], isJpeg ? "image.jpg" : "image.png", {
+        type: isJpeg ? "image/jpeg" : "image/png",
+      });
+
+      console.log({ isJpeg, imagePath });
 
       const compressedImageUrl = await compressImage(file);
 
@@ -149,8 +159,12 @@ const App: React.FC = () => {
             .map(async (image) => {
               const filename = image.split("\\").pop()!;
               const wellId =
-                filename.split("_").pop()?.replace(".jpg", "").toLowerCase() ||
-                "Unknown";
+                filename
+                  .split("_")
+                  .pop()
+                  ?.replace(".jpg", "")
+                  ?.replace(".png", "")
+                  .toLowerCase() || "Unknown";
               const originalImagePath = `${directoryPath}/${filename}`; // Remove 'file://'
               const optimizedImagePath = await getCachedOrCompressedImage(
                 originalImagePath
@@ -225,7 +239,7 @@ const App: React.FC = () => {
                 Change Directory <FolderOpen className="ml-1" />
               </Button>
               <Button
-                className=" bg-violet-700 hover:bg-violet-900"
+                className=" bg-violet-700 hover:bg-violet-900 big-screen-filter-text-button "
                 onClick={closeProgram}
               >
                 Exit <DoorOpen className="ml-1" />

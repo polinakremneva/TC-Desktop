@@ -1,7 +1,9 @@
 {
   "name": "tc-experiment-viewer",
   "private": true,
-  "version": "0.0.0",
+  "author": "Polina Kremneva",
+  "description": "Desktop application for viewing images created using the auto-imaging feature on the microscope",
+  "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",

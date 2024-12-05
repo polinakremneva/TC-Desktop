@@ -80,8 +80,8 @@ const TalesViewPlate: React.FC<PlateProps> = ({ images }) => {
   }, [images]);
 
   return (
-    <div className="items-center rounded-lg min-w-max bg-white shadow-xl">
-      <div className="flex  text-[2em] text-white p-2 pr-8">
+    <div className=" rounded-lg big-screen bg-white items-center shadow-xl">
+      <div className="flex text-[2em] text-white p-2 pr-8">
         <div className="flex items-center justify-center mx-auto py-[0.3em] underline text-center self-center gap-3 cursor-pointer">
           <FaImages className="text-indigo-500" />
           <RecentImages onImageSelect={handleRecentImageClick} />{" "}
@@ -93,7 +93,7 @@ const TalesViewPlate: React.FC<PlateProps> = ({ images }) => {
           {columns.map((col) => (
             <div
               key={`column-${col}`}
-              className="w-10 h-10 items-center text-blacktext-center font-bold"
+              className="w-10 h-10 big-screen-text items-center text-blacktext-center font-bold"
             >
               {col}
             </div>
@@ -103,7 +103,7 @@ const TalesViewPlate: React.FC<PlateProps> = ({ images }) => {
         {rows.map((row, rowIndex) => (
           <div className="flex items-center gap-1" key={`row-${rowIndex}`}>
             <React.Fragment key={row}>
-              <div className="w-10 h-10 gap-1 text-black  flex justify-center items-center font-bold">
+              <div className="w-10 h-10 text-black big-screen-text-col flex justify-center items-center font-bold">
                 {row}
               </div>
 
@@ -114,15 +114,16 @@ const TalesViewPlate: React.FC<PlateProps> = ({ images }) => {
                   (image) =>
                     image.wellId.toLowerCase() === cell.id.toLowerCase()
                 );
+                console.log("Matched Image:", matchedImage?.imagePath);
 
                 return !isDisabledRow ? ( // Ensure conditional rendering is valid JSX
                   <Dialog key={`dialog-${row}-${col}`}>
                     <LightTooltip title={cell.id}>
                       <DialogTrigger asChild>
                         <div
-                          className={`w-10 h-10 flex items-center mb-1 justify-center border border-gray-400 rounded-full ${
+                          className={`w-10 h-10 flex items-center mb-1 big-screen-pictures justify-center border border-gray-400 rounded-full ${
                             isDisabledRow
-                              ? "bg-gray-200 disabled cursor-not-allowed"
+                              ? "bg-gray-200 disabled big-screen-pictures cursor-not-allowed"
                               : "cursor-pointer"
                           }`}
                           onClick={() => {
@@ -136,11 +137,11 @@ const TalesViewPlate: React.FC<PlateProps> = ({ images }) => {
                             <img
                               src={matchedImage.imagePath}
                               alt={cell.id}
-                              className="w-8 h-8 rounded-full"
+                              className="w-8 h-8 rounded-full big-screen-pictures-inside"
                               loading="lazy"
                             />
                           ) : (
-                            <div className="w-8 h-8 rounded-full border border-gray-400 flex items-center justify-center"></div>
+                            <div className="w-8 h-8 rounded-full big-screen-pictures-inside border border-gray-400 flex items-center justify-center"></div>
                           )}
                         </div>
                       </DialogTrigger>
@@ -175,7 +176,7 @@ const TalesViewPlate: React.FC<PlateProps> = ({ images }) => {
                 ) : (
                   <div
                     key={`disabled-${row}-${col}`}
-                    className="w-10 h-10 rounded-full border border-gray-400 mb-1 flex items-center justify-center bg-gray-200 cursor-not-allowed"
+                    className="w-10 h-10 rounded-full border big-screen-pictures border-gray-400 mb-1 flex items-center justify-center bg-gray-200 cursor-not-allowed"
                   >
                     {/* Empty disabled cell */}
                   </div>

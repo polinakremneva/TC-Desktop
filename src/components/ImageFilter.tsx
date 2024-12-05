@@ -25,6 +25,12 @@ interface FilterValues {
   stage: string;
 }
 
+interface ImageInfo {
+  wellId: string;
+  imagePath: string;
+  filename: string;
+}
+
 export interface ImageFilterProps {
   onFilterChange: (filters: FilterValues) => void;
   directoryPath: string | null;
@@ -35,9 +41,6 @@ const ImageFilter: React.FC<ImageFilterProps> = ({
   directoryPath,
 }) => {
   const [isInputsEnabled, setIsInputsEnabled] = useState(false);
-  const [plateImages, setPlateImages] = useState<
-    { wellId: string; imagePath: string; filename: string }[]
-  >([]);
   const [filters, setFilters] = useState<FilterValues>({
     experiment: "",
     plate: "",
@@ -45,6 +48,8 @@ const ImageFilter: React.FC<ImageFilterProps> = ({
     stage: "",
   });
   const [isChecked, setIsChecked] = useState(false);
+  const [plateImages, setPlateImages] = useState<ImageInfo[]>([]);
+  const [tilesImages, setTilesImages] = useState<ImageInfo[]>([]);
 
   const handleChange = useCallback(
     (field: keyof FilterValues, value: string) => {
@@ -61,52 +66,66 @@ const ImageFilter: React.FC<ImageFilterProps> = ({
     setIsChecked(checked);
   };
 
-  const updatePlateImages = useCallback(
-    async (currentFilters: FilterValues) => {
-      if (!directoryPath) return;
+  const updateImages = async (
+    directoryPath: string | null,
+    filters: FilterValues,
+    imageType: "normal" | "tiles"
+  ): Promise<ImageInfo[]> => {
+    if (!directoryPath) return [];
 
-      try {
-        const imageFiles: string[] = await window.electron.getImages(
-          directoryPath
+    try {
+      const subDirectory =
+        imageType === "tiles"
+          ? `${directoryPath}\\5x_attention`
+          : directoryPath;
+
+      const imageFiles: string[] = await window.electron.getImages(
+        subDirectory
+      );
+
+      const filteredImages = imageFiles.filter((image) => {
+        const lowerCaseImage = image.toLowerCase();
+        const filenameParts = lowerCaseImage.split("_");
+        const plateInFile = filenameParts.find((part) =>
+          part.startsWith(filters.plate.toLowerCase())
         );
 
-        const filteredImages = imageFiles.filter((image) => {
-          const lowerCaseImage = image.toLowerCase();
-          const filenameParts = lowerCaseImage.split("_"); // Assuming parts are separated by underscores
-          const plateInFile = filenameParts.find((part) =>
-            part.startsWith(currentFilters.plate.toLowerCase())
-          );
+        const filterParts = [
+          filters.experiment.toLowerCase(),
+          filters.patientCode.toLowerCase(),
+          filters.stage.toLowerCase(),
+        ];
 
-          const filterParts = [
-            currentFilters.experiment.toLowerCase(),
-            currentFilters.patientCode.toLowerCase(),
-            currentFilters.stage.toLowerCase(),
-          ];
-          return (
-            plateInFile === currentFilters.plate.toLowerCase() &&
-            filterParts.every(
-              (part) => part === "" || lowerCaseImage.includes(part)
-            )
-          );
-        });
+        return (
+          plateInFile === filters.plate.toLowerCase() &&
+          filterParts.every(
+            (part) => part === "" || lowerCaseImage.includes(part)
+          )
+        );
+      });
 
-        const newPlateImages = filteredImages.map((image) => {
-          const filename = image.split("\\").pop() || "";
-          const wellId = filename.split("_").pop()?.split(".")[0] || "";
-          return {
-            wellId,
-            imagePath: `file://${directoryPath}/${filename}`,
-            filename,
-          };
-        });
+      return filteredImages.map((image) => {
+        const filename = image.split("\\").pop() || "";
 
-        setPlateImages(newPlateImages);
-      } catch (error) {
-        console.error("Error updating plate images:", error);
-      }
-    },
-    [directoryPath]
-  );
+        // Remove "_attention_map" if it exists
+        const baseFilename = filename.replace("_attention_map", "");
+
+        // Extract wellId as the last underscore-separated segment
+        const wellId = baseFilename.split("_").slice(-1)[0].split(".")[0];
+
+        // Determine the correct imagePath
+        const imagePath =
+          imageType === "tiles"
+            ? `file://${subDirectory}/${filename}` // Use original filename for path
+            : `file://${directoryPath}/${filename}`;
+
+        return { wellId, imagePath, filename };
+      });
+    } catch (error) {
+      console.error("Error updating images:", error);
+      return [];
+    }
+  };
 
   const checkFileExists = useCallback(async () => {
     if (!filters.experiment || !filters.plate || !directoryPath) {
@@ -142,8 +161,16 @@ const ImageFilter: React.FC<ImageFilterProps> = ({
   }, [checkFileExists]);
 
   useEffect(() => {
-    updatePlateImages(filters);
-  }, [filters, updatePlateImages]);
+    const fetchImages = async () => {
+      const normalImages = await updateImages(directoryPath, filters, "normal");
+      const tileImages = await updateImages(directoryPath, filters, "tiles");
+
+      setPlateImages(normalImages);
+      setTilesImages(tileImages);
+    };
+
+    fetchImages();
+  }, [filters, directoryPath]);
 
   return (
     <>
@@ -160,7 +187,7 @@ const ImageFilter: React.FC<ImageFilterProps> = ({
               ease: [0.25, 0.8, 0.25, 1],
             }}
           >
-            <Label>{isChecked ? "Tales View" : "Normal View"}</Label>
+            <Label>{isChecked ? "Tiles View" : "Normal View"}</Label>
           </motion.div>{" "}
         </div>
         {/* Experiment Input */}
@@ -244,13 +271,22 @@ const ImageFilter: React.FC<ImageFilterProps> = ({
                 <DropdownMenuRadioItem value="PostStain">
                   PostStain
                 </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="5xh_data-pipeline">
+                  data-pipeline-5xh
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="20xh_data-pipeline">
+                  data-pipeline-20xh
+                </DropdownMenuRadioItem>
+                <DropdownMenuRadioItem value="BrightField">
+                  BrightField
+                </DropdownMenuRadioItem>
               </DropdownMenuRadioGroup>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </form>
       {isChecked ? (
-        <TalesViewPlate images={plateImages} />
+        <TalesViewPlate images={tilesImages} />
       ) : (
         <NormalViewPlate images={plateImages} />
       )}

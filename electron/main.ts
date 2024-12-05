@@ -60,7 +60,7 @@ ipcMain.handle("get-images", async (event: any, directoryPath: string) => {
   try {
     const files: string[] = fs
       .readdirSync(directoryPath)
-      .filter((file: string) => file.endsWith(".jpg")); // Filters .jpg files
+      .filter((file: string) => file.endsWith(".jpg") || file.endsWith(".png")); // Filters .jpg files
     return files.map((file: string) => path.join(directoryPath, file)); // Return full file paths
   } catch (error) {
     console.error("Error loading images:", error);

@@ -1,4 +1,4 @@
-import p, { app as i, ipcMain as t, dialog as w, BrowserWindow as d } from "electron";
+import p, { app as i, ipcMain as s, dialog as w, BrowserWindow as d } from "electron";
 import { fileURLToPath as u } from "node:url";
 import n from "node:path";
 import f from "fs";
@@ -25,24 +25,24 @@ function g() {
 i.on("window-all-closed", () => {
   process.platform !== "darwin" && (i.quit(), e = null);
 });
-t.handle("get-images", async (c, o) => {
+s.handle("get-images", async (c, o) => {
   try {
-    return f.readdirSync(o).filter((s) => s.endsWith(".jpg")).map((s) => n.join(o, s));
+    return f.readdirSync(o).filter((t) => t.endsWith(".jpg") || t.endsWith(".png")).map((t) => n.join(o, t));
   } catch (r) {
     return console.error("Error loading images:", r), [];
   }
 });
-t.handle("dialog:openDirectory", async () => (await w.showOpenDialog(e, {
+s.handle("dialog:openDirectory", async () => (await w.showOpenDialog(e, {
   properties: ["openDirectory"]
 })).filePaths[0]);
-t.handle("read-image-file", async (c, o) => {
+s.handle("read-image-file", async (c, o) => {
   try {
     return o.startsWith("file://") && (o = o.replace("file://", "")), console.log("Final Image Path:", o), f.readFileSync(o).toString("base64");
   } catch (r) {
     throw console.error("Error reading image file:", r), r;
   }
 });
-t.handle("app:exit", () => {
+s.handle("app:exit", () => {
   i.quit();
 });
 i.on("activate", () => {
